@@ -1,2 +1,3 @@
 # Chess
-A complete chess application 
+
+A complete chess website from scratch
