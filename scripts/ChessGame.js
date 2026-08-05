@@ -243,7 +243,7 @@ export class Game {
         ).forEach((move) => legalMoves.push(move));
         break;
       case "n":
-      case "n":
+      case "N":
         legalMoves.push([r + 2, c + 1]);
         legalMoves.push([r + 2, c - 1]);
         legalMoves.push([r - 2, c + 1]);
@@ -322,7 +322,86 @@ export class Game {
         }
         break;
       case "k":
+        //if black can short castle
+        if (this.blackShortCastle) {
+          //first checks for checks
+          if (
+            this.inCheck(r, c) ||
+            this.inCheck(r, c + 1) ||
+            this.inCheck(r, c + 2)
+          )
+            if (
+              this.gameBoardArr[0][5] == "" &&
+              this.gameBoardArr[0][6] == "" &&
+              this.gameBoardArr[0][7] == "r"
+            ) {
+              //Also check for empty squares
+              availableMoves.push([r, c + 2]);
+            }
+        }
+
+        if (this.blackLongCastle) {
+          //first checks for checks
+          if (
+            this.inCheck(r, c) ||
+            this.inCheck(r, c - 1) ||
+            this.inCheck(r, c - 2)
+          )
+            if (
+              this.gameBoardArr[0][3] == "" &&
+              this.gameBoardArr[0][2] == "" &&
+              this.gameBoardArr[0][1] == "" &&
+              this.gameBoardArr[0][0] == "r"
+            ) {
+              //Also check for empty squares
+              availableMoves.push([r, c - 2]);
+            }
+        }
       case "K":
+        for (let i = -1; i < 2; i++) {
+          for (let j = -1; j < 2; j++) {
+            if (i == 0 && j == 0) continue;
+            availableMoves.push([r + i, c + j]);
+          }
+        }
+
+        if (pieceAtPosition == "k") break;
+
+        //if white can short castle
+        if (this.whiteLongCastle) {
+          //first checks for checks
+          if (
+            this.inCheck(r, c) ||
+            this.inCheck(r, c + 1) ||
+            this.inCheck(r, c + 2)
+          )
+            if (
+              this.gameBoardArr[7][5] == "" &&
+              this.gameBoardArr[7][6] == "" &&
+              this.gameBoardArr[7][7] == "R"
+            ) {
+              //Also check for empty squares
+              availableMoves.push([r, c + 2]);
+            }
+        }
+
+        if (this.whiteShortCastle) {
+          //first checks for checks
+          if (
+            this.inCheck(r, c) ||
+            this.inCheck(r, c - 1) ||
+            this.inCheck(r, c - 2)
+          )
+            if (
+              this.gameBoardArr[7][3] == "" &&
+              this.gameBoardArr[7][2] == "" &&
+              this.gameBoardArr[7][1] == "" &&
+              this.gameBoardArr[7][0] == "R"
+            ) {
+              //Also check for empty squares
+              availableMoves.push([r, c - 2]);
+            }
+        }
         break;
       default:
         return [];

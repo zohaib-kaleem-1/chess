@@ -136,20 +136,12 @@ export function showBoardPieces(arr) {
   }
 }
 
-export function setUpTimer(currentPlayerColour) {
+export function setUpTimer() {
   let timerElements = document.querySelectorAll(".timer");
 
-  if (currentPlayerColour == "w") {
-    timerElements[0].style.backgroundColor = "rgb(24, 24, 24)";
-    timerElements[0].style.color = "white";
+  timerElements[0].style.backgroundColor = "rgb(24, 24, 24)";
+  timerElements[0].style.color = "white";
 
-    timerElements[1].style.backgroundColor = "white";
-    timerElements[1].style.color = "black";
-  } else if (currentPlayerColour == "b") {
-    timerElements[0].style.backgroundColor = "white";
-    timerElements[0].style.color = "black";
-
-    timerElements[1].style.backgroundColor = "rgb(24, 24, 24)";
-    timerElements[1].style.color = "white";
-  }
+  timerElements[1].style.backgroundColor = "white";
+  timerElements[1].style.color = "black";
 }

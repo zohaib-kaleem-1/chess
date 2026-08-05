@@ -1,4 +1,4 @@
-import { showBoard, showBoardPieces } from "./ChessBoard.js";
+import { setUpTimer, showBoard, showBoardPieces } from "./ChessBoard.js";
 import { Game } from "./ChessGame.js";
 import { showMoves } from "./ChessUI.js";
 
@@ -6,11 +6,6 @@ export class GameEngine {
   constructor(boardElementId) {
     this.boardElementId = boardElementId;
     this.game = new Game();
-  }
-
-  showBoard() {
-    showBoard(this.boardElementId);
-    showBoardPieces(this.game.gameBoardArr);
   }
 
   resetGame() {
@@ -21,11 +16,23 @@ export class GameEngine {
     this.game.setCustomGamePosition(arr, playerTurn);
   }
 
-  getMoves(cellId) {
-    return this.game.getLegalMoves(cellId);
-  }
+  init() {
+    //Add event listners
+    document.querySelectorAll(".cell").forEach((cellElement) =>
+      cellElement.addEventListener("click", () => {
+        let cellId = cellElement.id;
+        let moves = game.getMoves(cellId);
 
-  showMoves(moves) {
-    showMoves(moves, this.game.gameBoardArr);
+        if (false) {
+        } else {
+          game.showMoves(moves);
+        }
+      }),
+    );
+
+    //display game
+    showBoard(this.boardElementId);
+    showBoardPieces(this.game.gameBoardArr);
+    setUpTimer();
   }
 }
