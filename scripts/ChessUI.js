@@ -3,19 +3,17 @@ import {
   indexToCellCode,
   isLowerCase,
   isUpperCase,
-  log,
 } from "./Helper.js";
 
 export function showMoves(moves, arr) {
-  if (moves == null || arr == null) {
-    return;
-  }
+  if (moves == null || arr == null) return;
 
   moves.forEach((index) => {
     let cellCode = indexToCellCode(index);
+    if (!cellCode) return;
 
     if (arr[index[0]][index[1]] == "") {
-      document.getElementById(cellCode).innerHTML =
+      document.getElementById(cellCode).innerHTML +=
         '<div class="under-attack-dot"></div>';
     } else {
       document.getElementById(cellCode).innerHTML +=
@@ -31,9 +29,13 @@ export function showLastMove(lastMoveCell) {
   });
 
   lastMoveCell.forEach((i) => {
-    document.getElementById(i).innerHTML += '<div id="last-move" ></div>';
+    const cell = document.getElementById(i);
+    if (cell) {
+      cell.innerHTML += '<div id="last-move"></div>';
+    }
   });
 }
+
 export function hideMoves() {
   let divToRemove = document.querySelectorAll(
     ".under-attack-dot, .under-attack-piece",
@@ -42,21 +44,41 @@ export function hideMoves() {
   if (divToRemove) divToRemove.forEach((div) => div.remove());
 }
 
+export function showCheck(kingPos) {
+  // Remove existing check indicators
+  document.querySelectorAll("#cell-check").forEach((el) => el.remove());
+
+  const cellCode = indexToCellCode(kingPos);
+  if (!cellCode) return;
+
+  const cell = document.getElementById(cellCode);
+  if (cell) {
+    cell.innerHTML += '<div id="cell-check"></div>';
+  }
+}
+
 export function selectCell(cellCode, game) {
-  if (game.selectedCell == cellCode) return;
-  if (game.selectedCell != "") hideMoves(game.gameBoardArr);
-
   const [row, col] = cellCodeToIndex(cellCode);
-  let PieceOnCell = game.gameBoardArr[row][col];
+  if (row === null || col === null) return;
+  if (game.selectedCell == cellCode) return;
 
-  if (
-    (game.playerTurn && isLowerCase(PieceOnCell)) ||
-    (!game.playerTurn && isUpperCase(PieceOnCell))
-  )
+  if (game.selectedCell != "") hideMoves();
+
+  const piece = game.gameBoardArr[row][col];
+
+  // Check if it's the current player's piece
+  const isWhite = piece === piece.toUpperCase();
+  if ((game.playerTurn && !isWhite) || (!game.playerTurn && isWhite)) {
     return;
+  }
 
   game.selectedCell = cellCode;
   const moves = game.getLegalMoves(cellCode);
 
-  showMoves(moves, game.gameBoardArr);
+  // Filter moves that are actually legal (king safety)
+  const legalMoves = moves.filter(([endRow, endCol]) => {
+    return game.isMoveLegal(row, col, endRow, endCol);
+  });
+
+  showMoves(legalMoves, game.gameBoardArr);
 }

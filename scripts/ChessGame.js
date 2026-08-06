@@ -1,3 +1,4 @@
+// ChessGame.js
 import {
   cellCodeToIndex,
   getSlidingMoves,
@@ -11,15 +12,32 @@ export class Game {
   constructor() {
     this.gameBoardArr = new Array(8).fill().map(() => new Array(8).fill(""));
     this.selectedCell = "";
-    this.lastMove = [];
+    this.lastMove = ["", "", ""];
     this.whiteShortCastle = true;
     this.whiteLongCastle = true;
     this.blackShortCastle = true;
     this.blackLongCastle = true;
-    this.enPessantCol = -2; //If any pawn can be played en-pessant
+    this.enPassantCol = -2; //If any pawn can be played en-passant
     this.playerTurn = true; //true for white and false for black
+    this.halfMove = 0;
+    this.fullMoveCount = 0;
+    this.moveHistory = [];
   }
 
+  getGamePieces() {
+    let GamePieces = [[], []];
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        let piece = this.gameBoardArr[row][col];
+        if (piece != "") {
+          if (isUpperCase(piece)) GamePieces[0].push(piece);
+          else if (isLowerCase(piece)) GamePieces[1].push(piece);
+        }
+      }
+    }
+
+    return GamePieces;
+  }
   playMove(cellId) {
     const [startRow, startCol] = cellCodeToIndex(this.selectedCell);
     const [endRow, endCol] = cellCodeToIndex(cellId);
@@ -28,27 +46,39 @@ export class Game {
     let pieceOnSelectedCell = this.gameBoardArr[startRow][startCol];
     let pieceOnReachingCell = this.gameBoardArr[endRow][endCol];
 
-    this.lastMove = [this.selectedCell, cellId];
+    if (
+      pieceOnSelectedCell.toLowerCase() == "p" ||
+      pieceOnReachingCell.toLowerCase() == "p"
+    ) {
+      this.halfMove = 0;
+    } else {
+      this.halfMove++;
+    }
+
+    if (!this.playerTurn) this.fullMoveCount++;
+
+    this.lastMove = [this.selectedCell, cellId, pieceOnReachingCell];
+    this.moveHistory.push(this.lastMove);
+
     //verify there is a piece on selected cell
     if (pieceOnSelectedCell == "") return;
 
-    //checking for special moves like en-pessant, castling, promotions
+    //checking for special moves like en-passant, castling, promotions
     //check the piece if it is pawn king or rook then adjust the game position
     switch (pieceOnSelectedCell) {
       case "p":
-      case "P":
-        //there are two special moves castling and en-pessant
-        //checking en-pessant
+      case "P": {
+        //checking en-passant
         if (Math.abs(startRow - endRow) == 2) {
-          //pawn has moved two steps allowing en-pessant
-          //setting up en-pessant col which other pawn piece can get legal move upon
-          this.enPessantCol = startCol;
+          //pawn has moved two steps allowing en-passant
+          //setting up en-passant col which other pawn piece can get legal move upon
+          this.enPassantCol = startCol;
           this.selectedCell = "";
           this.gameBoardArr[startRow][startCol] = "";
           this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
-
           return;
         }
+
         //promotion
         else if (endRow % 7 == 0) {
           //pawn has reached other side of board row 0 or 7
@@ -57,7 +87,7 @@ export class Game {
           this.gameBoardArr[startRow][startCol] = "";
           this.gameBoardArr[endRow][endCol] = "Q";
         } else if (
-          endCol == this.enPessantCol &&
+          endCol == this.enPassantCol &&
           ((pieceOnSelectedCell == "P" &&
             startRow == 3 &&
             Math.abs(startCol - endCol) == 1) ||
@@ -65,10 +95,9 @@ export class Game {
               startRow == 4 &&
               Math.abs(startCol - endCol) == 1))
         ) {
-          //play en-pessant
+          //play en-passant
           //kill the pawn
-          this.gameBoardArr[startRow][this.enPessantCol] == "";
-
+          this.gameBoardArr[startRow][this.enPassantCol] = "";
           //move the pawn
           this.gameBoardArr[startRow][startCol] = "";
           this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
@@ -77,16 +106,14 @@ export class Game {
           this.gameBoardArr[startRow][startCol] = "";
           this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
         }
-
         break;
+      }
 
       case "k":
-      case "K":
+      case "K": {
         //checking if player has played castling move 2 steps
         if (Math.abs(startCol - endCol) == 2) {
           //playing two step mean it is castling
-          //? moves are showing because get legal moves checked it was not in check also had no piece between them also if player had moved the castling rights would have been lost
-
           //see if player is castling to king or queen side and store the rook index of that side
           //default queen side
           let rookIndex = [startRow, 0];
@@ -118,50 +145,56 @@ export class Game {
           this.whiteShortCastle = false;
         }
         break;
+      }
 
       case "r":
-      case "R":
+      case "R": {
         //if rook moves king can't castle that way
         //checking rook was on which side
-        if (startRow % 7 == 0) {
-          if (startCol == 7) {
-            if (pieceAtPosition == "r") this.blackShortCastle = false;
-            else this.whiteShortCastle = false;
-          }
-          if (startCol == 0) {
-            if (pieceAtPosition == "r") this.blackLongCastle = false;
-            else this.whiteLongCastle = false;
-          }
+        // Black rooks are on row 0, White rooks are on row 7
+        if (pieceOnSelectedCell == "r") {
+          // Black rook
+          if (startCol == 0) this.blackLongCastle = false;
+          if (startCol == 7) this.blackShortCastle = false;
+        } else {
+          // White rook
+          if (startCol == 0) this.whiteLongCastle = false;
+          if (startCol == 7) this.whiteShortCastle = false;
         }
 
         //move the rook
         this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
         this.gameBoardArr[startRow][startCol] = "";
         break;
-      default:
+      }
+
+      default: {
         this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
         this.gameBoardArr[startRow][startCol] = "";
 
         if (pieceOnReachingCell.toLowerCase() == "r") {
           //rook was taken castling lost on that side
           if (pieceOnReachingCell == "r") {
+            // Black rook was captured
+            if (endCol == 0) this.blackLongCastle = false;
             if (endCol == 7) this.blackShortCastle = false;
-            else if (endCol == 0) this.blackLongCastle = false;
           } else {
+            // White rook was captured
+            if (endCol == 0) this.whiteLongCastle = false;
             if (endCol == 7) this.whiteShortCastle = false;
-            else if (endCol == 0) this.whiteLongCastle = false;
           }
         }
         break;
+      }
     }
     this.selectedCell = "";
-    this.enPessantCol = -2; //reset en-pessant column it is available for that move only
+    this.enPassantCol = -2; //reset en-passant column it is available for that move only
   }
 
   resetPosition() {
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
-        //firstRow
+        // Row 0: Black pieces (top)
         if (i == 0) {
           if (j == 0 || j == 7) {
             this.gameBoardArr[i][j] = "r";
@@ -174,11 +207,17 @@ export class Game {
           } else if (j == 4) {
             this.gameBoardArr[i][j] = "k";
           }
-        } else if (i == 1) {
+        }
+        // Row 1: Black pawns
+        else if (i == 1) {
           this.gameBoardArr[i][j] = "p";
-        } else if (i == 6) {
+        }
+        // Row 6: White pawns
+        else if (i == 6) {
           this.gameBoardArr[i][j] = "P";
-        } else if (i == 7) {
+        }
+        // Row 7: White pieces (bottom)
+        else if (i == 7) {
           if (j == 0 || j == 7) {
             this.gameBoardArr[i][j] = "R";
           } else if (j == 1 || j == 6) {
@@ -203,6 +242,7 @@ export class Game {
         this.gameBoardArr[i][j] = arr[i][j];
       }
     }
+    this.playerTurn = playerTurn;
   }
 
   getMoves(cellName) {
@@ -214,7 +254,7 @@ export class Game {
     let availableMoves = [];
 
     switch (pieceAtPosition) {
-      case "p":
+      case "p": // Black pawn moves down (increasing row)
         if (r == 1) {
           availableMoves = [
             [r + 2, c],
@@ -230,7 +270,7 @@ export class Game {
           ];
         }
         break;
-      case "P":
+      case "P": // White pawn moves up (decreasing row)
         if (r == 6) {
           availableMoves = [
             [r - 2, c],
@@ -248,8 +288,15 @@ export class Game {
         break;
       case "k":
         if (this.blackShortCastle) availableMoves.push([r, c + 2]);
-
         if (this.blackLongCastle) availableMoves.push([r, c - 2]);
+        // Add king moves
+        for (let i = -1; i < 2; i++) {
+          for (let j = -1; j < 2; j++) {
+            if (i == 0 && j == 0) continue;
+            availableMoves.push([r + i, c + j]);
+          }
+        }
+        break;
       case "K":
         for (let i = -1; i < 2; i++) {
           for (let j = -1; j < 2; j++) {
@@ -257,21 +304,23 @@ export class Game {
             availableMoves.push([r + i, c + j]);
           }
         }
-
-        if (pieceAtPosition == "k") break;
         if (this.whiteLongCastle) availableMoves.push([r, c - 2]);
         if (this.whiteShortCastle) availableMoves.push([r, c + 2]);
-
         break;
       case "r":
       case "R":
+        for (let i = 0; i < 8; i++) {
+          availableMoves.push([i, c]);
+          availableMoves.push([r, i]);
+        }
+        break;
       case "q":
       case "Q":
         for (let i = 0; i < 8; i++) {
           availableMoves.push([i, c]);
           availableMoves.push([r, i]);
         }
-        if (pieceAtPosition.toLowerCase() == "r") break;
+      // Fall through to bishop moves
       case "b":
       case "B":
         for (let i = 0; i < 8; i++) {
@@ -285,13 +334,10 @@ export class Game {
       case "N":
         availableMoves.push([r + 2, c - 1]);
         availableMoves.push([r + 2, c + 1]);
-
         availableMoves.push([r - 2, c - 1]);
         availableMoves.push([r - 2, c + 1]);
-
         availableMoves.push([r + 1, c + 2]);
         availableMoves.push([r - 1, c + 2]);
-
         availableMoves.push([r + 1, c - 2]);
         availableMoves.push([r - 1, c - 2]);
         break;
@@ -310,37 +356,112 @@ export class Game {
     );
   }
 
+  // Helper method to check if a piece can attack a specific square
+  canPieceAttack(fromRow, fromCol, toRow, toCol) {
+    const piece = this.gameBoardArr[fromRow][fromCol];
+    if (piece === "") return false;
+
+    const pieceLower = piece.toLowerCase();
+
+    switch (pieceLower) {
+      case "p": {
+        // Black pawn attacks down (increasing row), White pawn attacks up (decreasing row)
+        const direction = isUpperCase(piece) ? -1 : 1;
+        const rowDiff = toRow - fromRow;
+        const colDiff = Math.abs(toCol - fromCol);
+        return rowDiff === direction && colDiff === 1;
+      }
+
+      case "n": {
+        // Knight moves in L-shape
+        const rowDiff = Math.abs(toRow - fromRow);
+        const colDiff = Math.abs(toCol - fromCol);
+        return (
+          (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)
+        );
+      }
+
+      case "b": {
+        // Bishop moves diagonally
+        const rowDiff = Math.abs(toRow - fromRow);
+        const colDiff = Math.abs(toCol - fromCol);
+        if (rowDiff !== colDiff) return false;
+        return this.isPathClear(fromRow, fromCol, toRow, toCol);
+      }
+
+      case "r": {
+        // Rook moves straight
+        if (fromRow !== toRow && fromCol !== toCol) return false;
+        return this.isPathClear(fromRow, fromCol, toRow, toCol);
+      }
+
+      case "q": {
+        // Queen moves like bishop or rook
+        const rowDiff = Math.abs(toRow - fromRow);
+        const colDiff = Math.abs(toCol - fromCol);
+        if (rowDiff === colDiff) {
+          return this.isPathClear(fromRow, fromCol, toRow, toCol);
+        } else if (fromRow === toRow || fromCol === toCol) {
+          return this.isPathClear(fromRow, fromCol, toRow, toCol);
+        }
+        return false;
+      }
+
+      case "k": {
+        // King moves one square in any direction
+        const rowDiff = Math.abs(toRow - fromRow);
+        const colDiff = Math.abs(toCol - fromCol);
+        return rowDiff <= 1 && colDiff <= 1 && rowDiff + colDiff > 0;
+      }
+
+      default:
+        return false;
+    }
+  }
+
+  // Helper to check if path is clear for sliding pieces
+  isPathClear(fromRow, fromCol, toRow, toCol) {
+    const rowStep = Math.sign(toRow - fromRow);
+    const colStep = Math.sign(toCol - fromCol);
+
+    let currentRow = fromRow + rowStep;
+    let currentCol = fromCol + colStep;
+
+    while (currentRow !== toRow || currentCol !== toCol) {
+      if (this.gameBoardArr[currentRow][currentCol] !== "") {
+        return false; // Path blocked
+      }
+      currentRow += rowStep;
+      currentCol += colStep;
+    }
+    return true;
+  }
+
   inCheck(cellIndexToCheck, colourOfKing) {
-    let defendingPiece = colourOfKing == "w" ? "P" : "p";
-    let kingInCheck = false;
+    const [kingRow, kingCol] = cellIndexToCheck;
 
-    for (let row = 0; !kingInCheck && row < 8; row++) {
-      for (let col = 0; !kingInCheck && col < 8; col++) {
-        let piece = this.gameBoardArr[row][col];
+    // Check all squares on the board
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const piece = this.gameBoardArr[row][col];
+        if (piece === "") continue;
 
-        if (piece == "") continue;
+        // Only check enemy pieces (opposite color of the king)
+        const isWhitePiece = isUpperCase(piece);
+        const kingIsWhite = colourOfKing === "w";
 
-        //check moves of opponent piece
-        if (isEnemy(piece, defendingPiece)) {
-          let PieceCellName = indexToCellCode([row, col]);
-          let PieceMoves = this.getLegalMoves(PieceCellName);
+        // Skip if same color as king
+        if ((isWhitePiece && kingIsWhite) || (!isWhitePiece && !kingIsWhite)) {
+          continue;
+        }
 
-          if (
-            PieceMoves.some(
-              (index) =>
-                index[0] == cellIndexToCheck[0] &&
-                index[1] == cellIndexToCheck[1],
-            )
-          ) {
-            kingInCheck = true;
-          }
+        // Check if this piece can attack the king's position
+        if (this.canPieceAttack(row, col, kingRow, kingCol)) {
+          return true;
         }
       }
     }
-
-    console.log("checked for checks");
-
-    return kingInCheck;
+    return false;
   }
 
   getLegalMoves(cellCode) {
@@ -354,16 +475,14 @@ export class Game {
       case "r":
       case "R":
       case "b":
-      case "B":
+      case "B": {
         let direction = [];
         if (pieceAtPosition.toLowerCase() != "r") {
           direction.push([-1, -1], [1, 1], [-1, 1], [1, -1]);
         }
-
         if (pieceAtPosition.toLowerCase() != "b") {
           direction.push([-1, 0], [1, 0], [0, 1], [0, -1]);
         }
-
         getSlidingMoves(
           this.gameBoardArr,
           [r, c],
@@ -371,18 +490,22 @@ export class Game {
           pieceAtPosition,
         ).forEach((move) => legalMoves.push(move));
         break;
-      case "n":
-      case "N":
-        legalMoves.push([r + 2, c + 1]);
-        legalMoves.push([r + 2, c - 1]);
-        legalMoves.push([r - 2, c + 1]);
-        legalMoves.push([r - 2, c - 1]);
-        legalMoves.push([r - 1, c - 2]);
-        legalMoves.push([r + 1, c - 2]);
-        legalMoves.push([r - 1, c + 2]);
-        legalMoves.push([r + 1, c + 2]);
+      }
 
-        legalMoves = legalMoves.filter(
+      case "n":
+      case "N": {
+        const knightMoves = [
+          [r + 2, c + 1],
+          [r + 2, c - 1],
+          [r - 2, c + 1],
+          [r - 2, c - 1],
+          [r - 1, c - 2],
+          [r + 1, c - 2],
+          [r - 1, c + 2],
+          [r + 1, c + 2],
+        ];
+
+        legalMoves = knightMoves.filter(
           (index) =>
             index[0] > -1 &&
             index[0] < 8 &&
@@ -396,15 +519,14 @@ export class Game {
             ),
         );
         break;
+      }
 
       case "p":
-      case "P":
-        //calculate if piece go up or down
-        //if P mean white piece go up
-        //if p mean black piece go down
-        let pieceDirection = isUpperCase(pieceAtPosition) ? -1 : 1;
+      case "P": {
+        // White pawn moves up (-1), Black pawn moves down (+1)
+        const pieceDirection = isUpperCase(pieceAtPosition) ? -1 : 1;
 
-        //2 steps if on first line
+        // 2 steps if on starting row (White: row 6, Black: row 1)
         if (
           (pieceAtPosition == "P" && r == 6) ||
           (pieceAtPosition == "p" && r == 1)
@@ -412,116 +534,122 @@ export class Game {
           if (
             this.gameBoardArr[r + pieceDirection][c] == "" &&
             this.gameBoardArr[r + pieceDirection + pieceDirection][c] == ""
-          )
+          ) {
             legalMoves.push([r + 2 * pieceDirection, c]);
+          }
         }
 
-        //move downward if no piece in front
-        if (this.gameBoardArr[r + pieceDirection][c] == "")
+        // Move forward if no piece in front
+        if (this.gameBoardArr[r + pieceDirection]?.[c] == "") {
           legalMoves.push([r + pieceDirection, c]);
+        }
 
-        //if opponent piece in diagonal allow to catch that
+        // Diagonal captures
         if (
-          isEnemy(pieceAtPosition, this.gameBoardArr[r + pieceDirection][c + 1])
-        )
+          isEnemy(
+            pieceAtPosition,
+            this.gameBoardArr[r + pieceDirection]?.[c + 1],
+          )
+        ) {
           legalMoves.push([r + pieceDirection, c + 1]);
+        }
         if (
-          isEnemy(pieceAtPosition, this.gameBoardArr[r + pieceDirection][c - 1])
-        )
+          isEnemy(
+            pieceAtPosition,
+            this.gameBoardArr[r + pieceDirection]?.[c - 1],
+          )
+        ) {
           legalMoves.push([r + pieceDirection, c - 1]);
+        }
 
-        //Checking en-pessant pawn
-        /**
-         * there is enpessasnt column that says which column can pawn play en pessant
-         * checking if that column is on left or right to it and it in on the specific row
-         */
-
-        //checking current pawn position
+        // En-passant (White: row 3, Black: row 4)
         if (
           (pieceAtPosition == "P" && r == 3) ||
           (pieceAtPosition == "p" && r == 4)
         ) {
-          //can play enpessant see if it is valid
-          if (this.enPessantCol == c - 1)
+          if (this.enPassantCol == c - 1)
             legalMoves.push([r + pieceDirection, c - 1]);
-          if (this.enPessantCol == c + 1)
+          if (this.enPassantCol == c + 1)
             legalMoves.push([r + pieceDirection, c + 1]);
         }
         break;
-      case "k":
-      case "K":
-        //adding legal box moves of king
-        for (let i = -1; i < 2 && i + r < 8 && i + r > -1; i++) {
-          for (let j = -1; j < 2 && c + j < 8 && c + j > -1; j++) {
-            if (i == 0 && j == 0) continue;
+      }
 
-            if (
-              (this.gameBoardArr[r + i][c + j] == "" ||
-                isEnemy(pieceAtPosition, this.gameBoardArr[r + i][c + j])) &&
-              !this.inCheck([r + i][j + c], pieceAtPosition == "k" ? "b" : "w")
-            )
-              legalMoves.push([r + i, c + j]);
+      case "k":
+      case "K": {
+        const isWhiteKing = pieceAtPosition === "K";
+        const kingColor = isWhiteKing ? "w" : "b";
+
+        // First, check if king is currently in check
+        const kingInCheck = this.inCheck([r, c], kingColor);
+
+        // All possible king moves (one square in any direction)
+        const possibleMoves = [];
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            if (i === 0 && j === 0) continue;
+            const newRow = r + i;
+            const newCol = c + j;
+            if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8)
+              continue;
+
+            const targetPiece = this.gameBoardArr[newRow][newCol];
+            // Can't move to square occupied by own piece
+            if (targetPiece !== "" && !isEnemy(pieceAtPosition, targetPiece))
+              continue;
+            possibleMoves.push([newRow, newCol]);
           }
         }
 
-        /**
-         * Checking castling
-         * castling rules:
-         *  king or rook have not moved before
-         *  king must no be in check
-         *  the square king pass through should not be in check
-         *
-         * for that we have boolean variable short castle and long castle if king moves or rook gets killed or moves it become false
-         * we just have to check for checks and no piece between
-         */
+        // Check each possible move for safety
+        for (const move of possibleMoves) {
+          const [newRow, newCol] = move;
+          const capturedPiece = this.gameBoardArr[newRow][newCol];
 
-        //getting current king colour and row if he has not moves his indexes are pre-defined
-        let kingColour = pieceAtPosition == "k" ? "b" : "w";
-        let kingRow = kingColour == "b" ? 0 : 7;
+          // Make the move temporarily
+          this.gameBoardArr[newRow][newCol] = pieceAtPosition;
+          this.gameBoardArr[r][c] = "";
 
-        //checking if king can short castle (not moved yet)
-        if (
-          (kingColour == "b" && this.blackShortCastle) ||
-          (kingColour == "w" && this.whiteShortCastle)
-        ) {
-          //check if cells are empty
+          // Check if king is in check after the move
+          const wouldBeInCheck = this.inCheck([newRow, newCol], kingColor);
+
+          // Undo the move
+          this.gameBoardArr[r][c] = pieceAtPosition;
+          this.gameBoardArr[newRow][newCol] = capturedPiece;
+
+          if (!wouldBeInCheck) {
+            legalMoves.push(move);
+          }
+        }
+
+        // Castling logic (only if king is not in check)
+        if (!kingInCheck) {
+          // White king on row 7, Black king on row 0
+          const kingRow = isWhiteKing ? 7 : 0;
+
+          // Short castle (king side) - to column 6
           if (
-            this.gameBoardArr[kingRow][5] == "" &&
-            this.gameBoardArr[kingRow][6] == ""
+            (isWhiteKing && this.whiteShortCastle) ||
+            (!isWhiteKing && this.blackShortCastle)
           ) {
-            //check for checks for cell king has to move c, c+1, c+2 c is fixed for king not moved 4
-            if (
-              !this.inCheck([kingRow, 4], kingColour) &&
-              !this.inCheck([kingRow, 5], kingColour) &&
-              !this.inCheck([kingRow, 6], kingColour)
-            ) {
-              //Also check for empty squares
+            if (this.canCastle(kingRow, 4, 6, isWhiteKing)) {
               legalMoves.push([r, c + 2]);
             }
           }
-        }
 
-        if (
-          (kingColour == "b" && this.blackLongCastle) ||
-          (kingColour == "w" && this.whiteLongCastle)
-        ) {
-          //check if cells are empty
+          // Long castle (queen side) - to column 2
           if (
-            this.gameBoardArr[kingRow][3] == "" &&
-            this.gameBoardArr[kingRow][2] == ""
+            (isWhiteKing && this.whiteLongCastle) ||
+            (!isWhiteKing && this.blackLongCastle)
           ) {
-            //check for checks for cell king has to move c, c-1, c-2 c is fixed for king not moved 4
-            if (
-              !this.inCheck([kingRow, 3], kingColour) &&
-              !this.inCheck([kingRow, 3], kingColour) &&
-              !this.inCheck([kingRow, 2], kingColour)
-            ) {
-              //Also check for empty squares
+            if (this.canCastle(kingRow, 4, 2, isWhiteKing)) {
               legalMoves.push([r, c - 2]);
             }
           }
         }
         break;
+      }
+
       default:
         return [];
     }
@@ -529,14 +657,79 @@ export class Game {
     return legalMoves;
   }
 
-  getKingCell() {
-    let kingToFind = "k";
-    if (this.playerTurn) kingToFind = "K";
+  // Helper method for castling validation
+  canCastle(row, kingCol, targetCol, isWhiteKing) {
+    const rookCol = targetCol === 2 ? 0 : 7;
+    const rookPiece = isWhiteKing ? "R" : "r";
 
-    for (let i = 0; i < this.gamBoardArr.length; i++) {
-      for (let j = 0; j < this.gamBoardArr[i].length; j++) {
-        if (this.gamBoardArr[i][j] == kingToFind) return [i, j];
+    // Check if rook is in correct position
+    if (this.gameBoardArr[row][rookCol] !== rookPiece) {
+      return false;
+    }
+
+    // Check if path is clear
+    const step = targetCol > kingCol ? 1 : -1;
+    let currentCol = kingCol + step;
+    while (currentCol !== targetCol + step) {
+      if (this.gameBoardArr[row][currentCol] !== "") {
+        return false;
+      }
+      currentCol += step;
+    }
+
+    // Check that king doesn't pass through check
+    const kingColor = isWhiteKing ? "w" : "b";
+    const squaresToCheck = [kingCol, kingCol + step, targetCol];
+
+    for (const col of squaresToCheck) {
+      if (this.inCheck([row, col], kingColor)) {
+        return false;
       }
     }
+
+    return true;
+  }
+
+  getKingCell() {
+    const kingToFind = this.playerTurn ? "K" : "k";
+
+    for (let i = 0; i < this.gameBoardArr.length; i++) {
+      for (let j = 0; j < this.gameBoardArr[i].length; j++) {
+        if (this.gameBoardArr[i][j] == kingToFind) return [i, j];
+      }
+    }
+    return null; // King not found
+  }
+
+  // Check if a move is legal (doesn't leave king in check)
+  isMoveLegal(startRow, startCol, endRow, endCol) {
+    const piece = this.gameBoardArr[startRow][startCol];
+    if (piece === "") return false;
+
+    const isWhite = isUpperCase(piece);
+    const kingColor = isWhite ? "w" : "b";
+
+    // If moving the king, check its new position
+    let kingPos;
+    if (piece.toLowerCase() === "k") {
+      kingPos = [endRow, endCol];
+    } else {
+      kingPos = this.getKingCell();
+      if (!kingPos) return false;
+    }
+
+    // Make the move temporarily
+    const capturedPiece = this.gameBoardArr[endRow][endCol];
+    this.gameBoardArr[endRow][endCol] = piece;
+    this.gameBoardArr[startRow][startCol] = "";
+
+    // Check if king is in check
+    const isInCheck = this.inCheck(kingPos, kingColor);
+
+    // Undo the move
+    this.gameBoardArr[startRow][startCol] = piece;
+    this.gameBoardArr[endRow][endCol] = capturedPiece;
+
+    return !isInCheck;
   }
 }
