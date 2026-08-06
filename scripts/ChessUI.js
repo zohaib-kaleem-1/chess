@@ -1,11 +1,16 @@
-import { indexToCellCode } from "./Helper.js";
+import {
+  cellCodeToIndex,
+  indexToCellCode,
+  isLowerCase,
+  isUpperCase,
+  log,
+} from "./Helper.js";
 
 export function showMoves(moves, arr) {
   if (moves == null || arr == null) {
     return;
   }
 
-  hideMoves();
   moves.forEach((index) => {
     let cellCode = indexToCellCode(index);
 
@@ -39,11 +44,10 @@ export function hideMoves() {
 
 export function selectCell(cellCode, game) {
   if (game.selectedCell == cellCode) return;
-  if (game.selectedCell != "") hideMoves(game.arr);
+  if (game.selectedCell != "") hideMoves(game.gameBoardArr);
 
-  let row = 8 - parseInt(cellCode[1]);
-  let col = cellCode[0].charCodeAt(0) - "a".charCodeAt(0);
-  let PieceOnCell = game.arr[row][col].piece;
+  const [row, col] = cellCodeToIndex(cellCode);
+  let PieceOnCell = game.gameBoardArr[row][col];
 
   if (
     (game.playerTurn && isLowerCase(PieceOnCell)) ||
@@ -54,5 +58,5 @@ export function selectCell(cellCode, game) {
   game.selectedCell = cellCode;
   const moves = game.getLegalMoves(cellCode);
 
-  showMoves(moves, game.arr);
+  showMoves(moves, game.gameBoardArr);
 }

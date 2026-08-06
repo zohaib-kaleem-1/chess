@@ -20,15 +20,142 @@ export class Game {
     this.playerTurn = true; //true for white and false for black
   }
 
-  move(newPosition) {
-    let startPositionIndex = cellCodeToIndex(this.selectedCell);
-    let endPositionIndex = cellCodeToIndex(newPosition);
+  playMove(cellId) {
+    const [startRow, startCol] = cellCodeToIndex(this.selectedCell);
+    const [endRow, endCol] = cellCodeToIndex(cellId);
 
-    this.gameBoardArr[endPositionIndex[0]][endPositionIndex[1]] =
-      this.gameBoardArr[startPositionIndex[0]][startPositionIndex[1]];
-    this.gameBoardArr[startPositionIndex[0]][startPositionIndex[1]] = "";
+    //get the piece for special moves
+    let pieceOnSelectedCell = this.gameBoardArr[startRow][startCol];
+    let pieceOnReachingCell = this.gameBoardArr[endRow][endCol];
 
-    this.lastMoveCell = [this.selectedCell, newPos];
+    this.lastMove = [this.selectedCell, cellId];
+    //verify there is a piece on selected cell
+    if (pieceOnSelectedCell == "") return;
+
+    //checking for special moves like en-pessant, castling, promotions
+    //check the piece if it is pawn king or rook then adjust the game position
+    switch (pieceOnSelectedCell) {
+      case "p":
+      case "P":
+        //there are two special moves castling and en-pessant
+        //checking en-pessant
+        if (Math.abs(startRow - endRow) == 2) {
+          //pawn has moved two steps allowing en-pessant
+          //setting up en-pessant col which other pawn piece can get legal move upon
+          this.enPessantCol = startCol;
+          this.selectedCell = "";
+          this.gameBoardArr[startRow][startCol] = "";
+          this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+
+          return;
+        }
+        //promotion
+        else if (endRow % 7 == 0) {
+          //pawn has reached other side of board row 0 or 7
+          //TODO: add other promotions too
+          //play move and make it a queen for now
+          this.gameBoardArr[startRow][startCol] = "";
+          this.gameBoardArr[endRow][endCol] = "Q";
+        } else if (
+          endCol == this.enPessantCol &&
+          ((pieceOnSelectedCell == "P" &&
+            startRow == 3 &&
+            Math.abs(startCol - endCol) == 1) ||
+            (pieceOnSelectedCell == "p" &&
+              startRow == 4 &&
+              Math.abs(startCol - endCol) == 1))
+        ) {
+          //play en-pessant
+          //kill the pawn
+          this.gameBoardArr[startRow][this.enPessantCol] == "";
+
+          //move the pawn
+          this.gameBoardArr[startRow][startCol] = "";
+          this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+        } else {
+          //move the pawn
+          this.gameBoardArr[startRow][startCol] = "";
+          this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+        }
+
+        break;
+
+      case "k":
+      case "K":
+        //checking if player has played castling move 2 steps
+        if (Math.abs(startCol - endCol) == 2) {
+          //playing two step mean it is castling
+          //? moves are showing because get legal moves checked it was not in check also had no piece between them also if player had moved the castling rights would have been lost
+
+          //see if player is castling to king or queen side and store the rook index of that side
+          //default queen side
+          let rookIndex = [startRow, 0];
+          if (startCol - endCol == -2) {
+            //castling king side
+            rookIndex = [startRow, 7];
+          }
+
+          //move the king to new position
+          this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+          this.gameBoardArr[startRow][startCol] = "";
+
+          //move the rook beside king
+          this.gameBoardArr[rookIndex[0]][rookIndex[1]] = "";
+          this.gameBoardArr[startRow][startCol + (endCol - startCol) / 2] =
+            pieceOnSelectedCell == "k" ? "r" : "R";
+        } else {
+          //move the king to new position
+          this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+          this.gameBoardArr[startRow][startCol] = "";
+        }
+
+        //set castling false for later
+        if (pieceOnSelectedCell == "k") {
+          this.blackLongCastle = false;
+          this.blackShortCastle = false;
+        } else {
+          this.whiteLongCastle = false;
+          this.whiteShortCastle = false;
+        }
+        break;
+
+      case "r":
+      case "R":
+        //if rook moves king can't castle that way
+        //checking rook was on which side
+        if (startRow % 7 == 0) {
+          if (startCol == 7) {
+            if (pieceAtPosition == "r") this.blackShortCastle = false;
+            else this.whiteShortCastle = false;
+          }
+          if (startCol == 0) {
+            if (pieceAtPosition == "r") this.blackLongCastle = false;
+            else this.whiteLongCastle = false;
+          }
+        }
+
+        //move the rook
+        this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+        this.gameBoardArr[startRow][startCol] = "";
+        break;
+      default:
+        this.gameBoardArr[endRow][endCol] = pieceOnSelectedCell;
+        this.gameBoardArr[startRow][startCol] = "";
+
+        if (pieceOnReachingCell.toLowerCase() == "r") {
+          //rook was taken castling lost on that side
+          if (pieceOnReachingCell == "r") {
+            if (endCol == 7) this.blackShortCastle = false;
+            else if (endCol == 0) this.blackLongCastle = false;
+          } else {
+            if (endCol == 7) this.whiteShortCastle = false;
+            else if (endCol == 0) this.whiteLongCastle = false;
+          }
+        }
+        break;
+    }
+    this.selectedCell = "";
+    this.enPessantCol = -2; //reset en-pessant column it is available for that move only
   }
 
   resetPosition() {
@@ -194,7 +321,7 @@ export class Game {
         if (piece == "") continue;
 
         //check moves of opponent piece
-        if (this.isEnemy(piece, defendingPiece)) {
+        if (isEnemy(piece, defendingPiece)) {
           let PieceCellName = indexToCellCode([row, col]);
           let PieceMoves = this.getLegalMoves(PieceCellName);
 
@@ -210,6 +337,8 @@ export class Game {
         }
       }
     }
+
+    console.log("checked for checks");
 
     return kingInCheck;
   }
@@ -313,8 +442,6 @@ export class Game {
           (pieceAtPosition == "p" && r == 4)
         ) {
           //can play enpessant see if it is valid
-          console.log("");
-
           if (this.enPessantCol == c - 1)
             legalMoves.push([r + pieceDirection, c - 1]);
           if (this.enPessantCol == c + 1)
@@ -322,85 +449,77 @@ export class Game {
         }
         break;
       case "k":
-        //if black can short castle
-        if (this.blackShortCastle) {
-          //first checks for checks
-          if (
-            this.inCheck(r, c) ||
-            this.inCheck(r, c + 1) ||
-            this.inCheck(r, c + 2)
-          )
-            if (
-              this.gameBoardArr[0][5] == "" &&
-              this.gameBoardArr[0][6] == "" &&
-              this.gameBoardArr[0][7] == "r"
-            ) {
-              //Also check for empty squares
-              availableMoves.push([r, c + 2]);
-            }
-        }
-
-        if (this.blackLongCastle) {
-          //first checks for checks
-          if (
-            this.inCheck(r, c) ||
-            this.inCheck(r, c - 1) ||
-            this.inCheck(r, c - 2)
-          )
-            if (
-              this.gameBoardArr[0][3] == "" &&
-              this.gameBoardArr[0][2] == "" &&
-              this.gameBoardArr[0][1] == "" &&
-              this.gameBoardArr[0][0] == "r"
-            ) {
-              //Also check for empty squares
-              availableMoves.push([r, c - 2]);
-            }
-        }
       case "K":
-        for (let i = -1; i < 2; i++) {
-          for (let j = -1; j < 2; j++) {
+        //adding legal box moves of king
+        for (let i = -1; i < 2 && i + r < 8 && i + r > -1; i++) {
+          for (let j = -1; j < 2 && c + j < 8 && c + j > -1; j++) {
             if (i == 0 && j == 0) continue;
-            availableMoves.push([r + i, c + j]);
+
+            if (
+              (this.gameBoardArr[r + i][c + j] == "" ||
+                isEnemy(pieceAtPosition, this.gameBoardArr[r + i][c + j])) &&
+              !this.inCheck([r + i][j + c], pieceAtPosition == "k" ? "b" : "w")
+            )
+              legalMoves.push([r + i, c + j]);
           }
         }
 
-        if (pieceAtPosition == "k") break;
+        /**
+         * Checking castling
+         * castling rules:
+         *  king or rook have not moved before
+         *  king must no be in check
+         *  the square king pass through should not be in check
+         *
+         * for that we have boolean variable short castle and long castle if king moves or rook gets killed or moves it become false
+         * we just have to check for checks and no piece between
+         */
 
-        //if white can short castle
-        if (this.whiteLongCastle) {
-          //first checks for checks
+        //getting current king colour and row if he has not moves his indexes are pre-defined
+        let kingColour = pieceAtPosition == "k" ? "b" : "w";
+        let kingRow = kingColour == "b" ? 0 : 7;
+
+        //checking if king can short castle (not moved yet)
+        if (
+          (kingColour == "b" && this.blackShortCastle) ||
+          (kingColour == "w" && this.whiteShortCastle)
+        ) {
+          //check if cells are empty
           if (
-            this.inCheck(r, c) ||
-            this.inCheck(r, c + 1) ||
-            this.inCheck(r, c + 2)
-          )
+            this.gameBoardArr[kingRow][5] == "" &&
+            this.gameBoardArr[kingRow][6] == ""
+          ) {
+            //check for checks for cell king has to move c, c+1, c+2 c is fixed for king not moved 4
             if (
-              this.gameBoardArr[7][5] == "" &&
-              this.gameBoardArr[7][6] == "" &&
-              this.gameBoardArr[7][7] == "R"
+              !this.inCheck([kingRow, 4], kingColour) &&
+              !this.inCheck([kingRow, 5], kingColour) &&
+              !this.inCheck([kingRow, 6], kingColour)
             ) {
               //Also check for empty squares
-              availableMoves.push([r, c + 2]);
+              legalMoves.push([r, c + 2]);
             }
+          }
         }
 
-        if (this.whiteShortCastle) {
-          //first checks for checks
+        if (
+          (kingColour == "b" && this.blackLongCastle) ||
+          (kingColour == "w" && this.whiteLongCastle)
+        ) {
+          //check if cells are empty
           if (
-            this.inCheck(r, c) ||
-            this.inCheck(r, c - 1) ||
-            this.inCheck(r, c - 2)
-          )
+            this.gameBoardArr[kingRow][3] == "" &&
+            this.gameBoardArr[kingRow][2] == ""
+          ) {
+            //check for checks for cell king has to move c, c-1, c-2 c is fixed for king not moved 4
             if (
-              this.gameBoardArr[7][3] == "" &&
-              this.gameBoardArr[7][2] == "" &&
-              this.gameBoardArr[7][1] == "" &&
-              this.gameBoardArr[7][0] == "R"
+              !this.inCheck([kingRow, 3], kingColour) &&
+              !this.inCheck([kingRow, 3], kingColour) &&
+              !this.inCheck([kingRow, 2], kingColour)
             ) {
               //Also check for empty squares
-              availableMoves.push([r, c - 2]);
+              legalMoves.push([r, c - 2]);
             }
+          }
         }
         break;
       default:

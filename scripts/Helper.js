@@ -61,3 +61,21 @@ export function isEnemy(piece, target) {
     (isUpperCase(piece) && isLowerCase(target))
   );
 }
+
+//returns true that cell is a move
+/**
+ * This check if gives cell is a move by checking if cell has any element having move class that is use to show move
+ * @param {string} cellCode cell address in format a1
+ */
+export function isMove(cellCode) {
+  return (
+    document.querySelectorAll(`#${cellCode} .under-attack-piece`).length == 1 ||
+    document.querySelectorAll(`#${cellCode} .under-attack-dot`).length == 1
+  );
+}
+
+export function log(...item) {
+  item.forEach((i) => {
+    console.log(i);
+  });
+}

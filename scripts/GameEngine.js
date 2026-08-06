@@ -1,6 +1,7 @@
 import { setUpTimer, showBoard, showBoardPieces } from "./ChessBoard.js";
 import { Game } from "./ChessGame.js";
-import { showMoves } from "./ChessUI.js";
+import { selectCell, showLastMove, showMoves } from "./ChessUI.js";
+import { cellCodeToIndex, isMove } from "./Helper.js";
 
 export class GameEngine {
   constructor(boardElementId) {
@@ -17,22 +18,25 @@ export class GameEngine {
   }
 
   init() {
-    //Add event listners
-    document.querySelectorAll(".cell").forEach((cellElement) =>
-      cellElement.addEventListener("click", () => {
-        let cellId = cellElement.id;
-        let moves = game.getMoves(cellId);
-
-        if (false) {
-        } else {
-          game.showMoves(moves);
-        }
-      }),
-    );
-
-    //display game
+    // display game
     showBoard(this.boardElementId);
     showBoardPieces(this.game.gameBoardArr);
     setUpTimer();
+
+    // Add event listeners to each cell: use this.game and UI showMoves
+    document.querySelectorAll(".cell").forEach((cellElement) => {
+      cellElement.addEventListener("click", () => {
+        const cellId = cellElement.id;
+
+        if (isMove(cellId)) {
+          this.game.playMove(cellId);
+          showBoardPieces(this.game.gameBoardArr);
+          showLastMove(this.game.lastMove);
+          this.game.playerTurn = !this.game.playerTurn;
+        } else {
+          selectCell(cellId, this.game);
+        }
+      });
+    });
   }
 }
