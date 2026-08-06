@@ -1,9 +1,6 @@
-```markdown
 # ♚ Chess Game
 
 A complete, fully-featured chess game with drag-and-drop support, timer, move history, and sound effects. Built with vanilla JavaScript, HTML5, and CSS3.
-
-![Chess Game Screenshot](gameImages/screenshot.png)
 
 ## 🎮 Live Demo
 
@@ -264,7 +261,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - **Discussions**: [Ask a question](https://github.com/zohaib-kaleem-1/chess/discussions)
 - **Email**: zohaib.kaleem@example.com
 
-## 🗺️ Roadmap
+## 🗺️ More To Come
 
 - [ ] AI opponent (Stockfish integration)
 - [ ] Online multiplayer (WebSocket)
@@ -312,7 +309,6 @@ A complete, fully-featured chess game with drag-and-drop support, timer, move hi
 
 ## 🎮 Features
 
-- **Drag & Drop** - Chess.com style piece movement
 - **Full Chess Rules** - En passant, castling, pawn promotion
 - **Timer** - Countdown with warnings
 - **Move History** - Algebraic notation
@@ -346,12 +342,9 @@ Apache License 2.0
 
 Made with ❤️ by [Zohaib Kaleem](https://github.com/zohaib-kaleem-1)
 
-````
 
-```markdown
 [![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-green)](https://zohaib-kaleem-1.github.io/chess/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![CSS3](https://img.shields.io/badge/CSS-3-blue)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![HTML5](https://img.shields.io/badge/HTML-5-orange)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-````
