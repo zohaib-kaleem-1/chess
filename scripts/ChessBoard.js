@@ -1,5 +1,12 @@
+// ChessBoard.js
 export function showBoard(id) {
-  document.getElementById(id).innerHTML = `
+  const boardElement = document.getElementById(id);
+  if (!boardElement) {
+    console.error(`Board element with id "${id}" not found`);
+    return;
+  }
+
+  boardElement.innerHTML = `
         <div class="cell" id="a8"></div>
         <div class="cell" id="b8"></div>
         <div class="cell" id="c8"></div>
@@ -73,64 +80,77 @@ export function showBoard(id) {
         <div class="cell" id="h1"></div>
 `;
 }
+
 export function showBoardPieces(arr) {
+  if (!arr) {
+    console.error("Board array is null or undefined");
+    return;
+  }
+
   let cellCodeArray = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
       let cellCode = cellCodeArray[j] + (8 - i).toString();
+      const cell = document.getElementById(cellCode);
+
+      // Skip if cell doesn't exist
+      if (!cell) {
+        console.warn(`Cell with id "${cellCode}" not found`);
+        continue;
+      }
 
       switch (arr[i][j]) {
         case "p":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-pawn.png" alt="Black Pawn" />';
           break;
         case "P":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-pawn.png" alt="White Pawn" />';
           break;
         case "r":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-rook.png" alt="Black Rook" />';
           break;
         case "R":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-rook.png" alt="White Rook" />';
           break;
         case "n":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-knight.png" alt="Black Knight" />';
           break;
         case "N":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-knight.png" alt="White Knight" />';
           break;
         case "b":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-bishop.png" alt="Black Bishop" />';
           break;
         case "B":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-bishop.png" alt="White Bishop" />';
           break;
         case "q":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-queen.png" alt="Black Queen" />';
           break;
         case "Q":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-queen.png" alt="White Queen" />';
           break;
         case "k":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/black-king.png" alt="Black King" />';
           break;
         case "K":
-          document.getElementById(cellCode).innerHTML =
+          cell.innerHTML =
             '<img src="images/pieces/white-king.png" alt="White King" />';
           break;
         default:
-          document.getElementById(cellCode).innerHTML = "";
+          cell.innerHTML = "";
       }
     }
   }
@@ -139,9 +159,13 @@ export function showBoardPieces(arr) {
 export function setUpTimer() {
   let timerElements = document.querySelectorAll(".timer");
 
-  timerElements[0].style.backgroundColor = "rgb(24, 24, 24)";
-  timerElements[0].style.color = "white";
+  if (timerElements.length >= 2) {
+    timerElements[0].style.backgroundColor = "rgb(24, 24, 24)";
+    timerElements[0].style.color = "white";
 
-  timerElements[1].style.backgroundColor = "white";
-  timerElements[1].style.color = "black";
+    timerElements[1].style.backgroundColor = "white";
+    timerElements[1].style.color = "black";
+  } else {
+    console.warn("Timer elements not found");
+  }
 }

@@ -62,8 +62,10 @@ export function selectCell(cellCode, game) {
   if (row === null || col === null) return;
   if (game.selectedCell == cellCode) return;
 
-  if (game.selectedCell != "") hideMoves();
-
+  if (game.selectedCell != "") {
+    game.selectedCell = "";
+    hideMoves();
+  }
   const piece = game.gameBoardArr[row][col];
 
   // Check if it's the current player's piece

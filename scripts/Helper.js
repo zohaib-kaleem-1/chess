@@ -79,3 +79,14 @@ export function log(...item) {
     console.log(i);
   });
 }
+
+// Add this function to Helper.js
+export function getPositionString(board, playerTurn) {
+  let pos = "";
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      pos += board[row][col] || ".";
+    }
+  }
+  return pos + (playerTurn ? "w" : "b");
+}

@@ -24,6 +24,20 @@ export class Game {
     this.moveHistory = [];
   }
 
+  // Add this method to the Game class
+  promotePawn(row, col, pieceType) {
+    const piece = this.gameBoardArr[row][col];
+    if (piece.toLowerCase() !== "p") return;
+
+    // Determine color
+    const isWhite = isUpperCase(piece);
+    const promotionPiece = isWhite
+      ? pieceType.toUpperCase()
+      : pieceType.toLowerCase();
+
+    this.gameBoardArr[row][col] = promotionPiece;
+  }
+
   getGamePieces() {
     let GamePieces = [[], []];
     for (let row = 0; row < 8; row++) {

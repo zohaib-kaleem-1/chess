@@ -3,34 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-
+    <title>Chess Game</title>
     <link rel="stylesheet" href="styles/styles.css" />
   </head>
   <body>
     <header>
-      <h1>Chess Board</h1>
+      <h1>♚ Chess</h1>
     </header>
 
     <div class="boardContainer">
+      <!-- Black Player Info (Top) -->
       <div class="user-info-bar">
         <div class="user-info">
           <img src="images/userLogo.png" alt="User 1" class="user-avatar" />
-          <span class="user-name">Zohaib Kaleem</span>
+          <span class="user-name">Black</span>
           <span class="user-rating">1200</span>
         </div>
-        <div class="timer">
+        <div class="timer" id="black-timer">
           <div class="time">10:00</div>
         </div>
       </div>
-      <div id="board"></div>
+
+      <!-- Board with Rank Labels -->
+      <div class="board-wrapper">
+        <div class="rank-labels">
+          <span>8</span>
+          <span>7</span>
+          <span>6</span>
+          <span>5</span>
+          <span>4</span>
+          <span>3</span>
+          <span>2</span>
+          <span>1</span>
+        </div>
+        <div id="board"></div>
+      </div>
+
+      <!-- File Labels -->
+      <div class="file-labels">
+        <span>a</span>
+        <span>b</span>
+        <span>c</span>
+        <span>d</span>
+        <span>e</span>
+        <span>f</span>
+        <span>g</span>
+        <span>h</span>
+      </div>
+
+      <!-- White Player Info (Bottom) -->
       <div class="user-info-bar">
         <div class="user-info">
           <img src="images/userLogo.png" alt="User 1" class="user-avatar" />
-          <span class="user-name">User 1</span>
+          <span class="user-name">White</span>
           <span class="user-rating">1200</span>
         </div>
-        <div class="timer">
+        <div class="timer" id="white-timer">
           <div class="time">10:00</div>
         </div>
       </div>
