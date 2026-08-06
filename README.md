@@ -55,15 +55,19 @@ Play the game here: [https://zohaib-kaleem-1.github.io/chess/](https://zohaib-ka
 
 ### Game Board
 
-![Game Board](gameImages/screenshot-board.png)
+![Game Board](gameImages/board.png)
+
+### New Game
+
+![Game Board](gameImages/newgame.png)
 
 ### Move History & Controls
 
-![Move History](gameImages/screenshot-history.png)
+![Move History](gameImages/history.png)
 
 ### Game Over Dialog
 
-![Game Over](gameImages/screenshot-gameover.png)
+![Game Over](gameImages/gameover.png)
 
 ## 🚀 Technologies Used
 
